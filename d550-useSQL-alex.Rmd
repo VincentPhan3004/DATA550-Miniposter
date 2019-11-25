@@ -1,0 +1,59 @@
+---
+title: "d550-exploredata"
+author: "Alex Tamm"
+date: "21/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Import all packages
+```{r echo=FALSE}
+require(tidyverse)
+library(DBI)
+```
+
+Load the data into memory
+```{r}
+fulldata <- read_csv("air.csv")
+```
+
+Dump into a database so I can use SQL
+
+```{r}
+con <- dbConnect(RSQLite::SQLite(), ":memory:")
+
+dbWriteTable(con, "flights",fulldata, overwrite=TRUE)
+
+fulldata <- NULL #Clear the variable I used when loading the CSV
+
+```
+
+Exploring the data
+
+```{r}
+qry <- "SELECT UniqueCarrier, sum(ArrDelay+DepDelay) as TotalDelay, count(X1) as NumFlights, avg(ArrDelay+DepDelay) as AverageDelay, Month FROM flights
+GROUP BY UniqueCarrier, Month
+"
+
+rs <- dbSendQuery(con, qry)
+myDF<-dbFetch(rs)
+dbClearResult(rs)
+
+
+```
+
+```{r}
+dbDisconnect(con) #Wiping out database from memory
+```
+
+
+```{r}
+
+bchartDF <- subset(myDF, select=c("UniqueCarrier", "Month", "AverageDelay"))
+ggplot(bchartDF, aes(fill=UniqueCarrier, y=AverageDelay, x=Month)) + 
+    geom_bar(position="dodge", stat="identity", colour="black")
+```
+
