@@ -26,7 +26,7 @@ Dump into a database so I can use SQL
 con <- dbConnect(RSQLite::SQLite(), ":memory:")
 
 dbWriteTable(con, "flights",fulldata, overwrite=TRUE)
-
+print(dbReadTable(con,"flights"))
 fulldata <- NULL #Clear the variable I used when loading the CSV
 
 ```
@@ -34,9 +34,11 @@ fulldata <- NULL #Clear the variable I used when loading the CSV
 Exploring the data
 
 ```{r}
-qry <- "SELECT UniqueCarrier, sum(ArrDelay+DepDelay) as TotalDelay, count(X1) as NumFlights, avg(ArrDelay+DepDelay) as AverageDelay, Month FROM flights
-GROUP BY UniqueCarrier, Month
+qry1 <- "SELECT UniqueCarrier, sum(ArrDelay+DepDelay) as TotalDelay, count(X1) as NumFlights, avg(ArrDelay) as AverageDelay,  FROM flights
+GROUP BY UniqueCarrier
 "
+
+qry2 <- "SELECT UniqueCarrier, avg(ArrDelay) as AverageArrivalDelay, count(X1) as NumFlights FROM flights GROUP BY UniqueCarrier, Month, DayofMonth HAVING Month=11 and DayofMonth < "
 
 rs <- dbSendQuery(con, qry)
 myDF<-dbFetch(rs)
@@ -48,6 +50,13 @@ dbClearResult(rs)
 ```{r}
 dbDisconnect(con) #Wiping out database from memory
 ```
+
+```{r}
+bchartDF <- subset(myDF, select=c("UniqueCarrier", "AverageDelay"))
+ggplot(bchartDF, aes(fill=UniqueCarrier, y=AverageDelay, x=UniqueCarrier)) + 
+    geom_bar(position="dodge", stat="identity", colour="black")
+```
+
 
 
 ```{r}
