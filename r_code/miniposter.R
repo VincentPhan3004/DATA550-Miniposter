@@ -1,5 +1,6 @@
 #### Setup ####
 library(tidyverse)
+library(magrittr)
 library(maps)
 library(rstudioapi)
 
@@ -14,7 +15,7 @@ source('airports.R')
 
 #### Data Wrangling ####
 # Subset airports data to only include columns of interest
-airports <- airports %>%
+airports %<>%
   select(iata_code, latitude_deg, longitude_deg)
 
 # List of airpots not in continental US to be removed
